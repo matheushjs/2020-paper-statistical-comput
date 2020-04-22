@@ -40,6 +40,11 @@ params = c(8.243800, 5.647846); # What the above optimization finds
 
 lines(x, dgamma(x, shape=params[1], scale=params[2]), lwd=mylwd[1], lty=mylty(1), col=mycolors[1]);
 
+#data = rgamma(n=20, shape=params[1], scale=params[2]);
+#print(data);
+data = c(45.42578,37.14454,31.91805,78.38157,51.13203,76.95387,34.06098,34.73172,26.69495,67.43486,98.01783,61.88397,41.99400,34.95689,51.49814,56.23078,55.54928,44.69236,36.25360,59.33179)
+hist(data, freq=FALSE, add=T);
+
 legend("topright", c("real dist.", "inferred dist."), col=mycolors[1:2], lty=1:2, lwd=3);
 
 text(17.8, 0.10, "c = 20");
