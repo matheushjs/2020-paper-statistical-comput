@@ -26,8 +26,6 @@ mydist = function(x){
 }
 
 x = seq(0, 100, length=2000);
-plot(x, mydist(x), type="l", lwd=mylwd[2], col=mycolors[2], xlab="x", ylab="density", xlim=c(0, 100), ylim=c(0, 0.035), lty=mylty(2));
-abline(v=6*pi, col=1, lwd=2, lty="12");
 
 # Now we find the closest gamma near that function
 difference = function(params){
@@ -38,14 +36,23 @@ difference = function(params){
 #print(params);
 params = c(8.243800, 5.647846); # What the above optimization finds
 
-lines(x, dgamma(x, shape=params[1], scale=params[2]), lwd=mylwd[1], lty=mylty(1), col=mycolors[1]);
-
 #data = rgamma(n=20, shape=params[1], scale=params[2]);
 #print(data);
 data = c(45.42578,37.14454,31.91805,78.38157,51.13203,76.95387,34.06098,34.73172,26.69495,67.43486,98.01783,61.88397,41.99400,34.95689,51.49814,56.23078,55.54928,44.69236,36.25360,59.33179)
-hist(data, freq=FALSE, add=T);
 
-legend("topright", c("real dist.", "inferred dist."), col=mycolors[1:2], lty=1:2, lwd=3);
+# Histogram
+hist(data, freq=FALSE, border=F, col="#A0A0A070", xlab="x", ylab="density", xlim=c(0, 100), ylim=c(0, 0.035));
 
-text(17.8, 0.10, "c = 20");
-arrows(18, 0.096, 19.9, 0.090, length=0.1);
+# Inferred dist
+lines(x, mydist(x), type="l", lwd=mylwd[2], col=mycolors[2], lty=mylty(2));
+abline(v=6*pi, col=1, lwd=2, lty="12");
+
+# Real dist
+lines(x, dgamma(x, shape=params[1], scale=params[2]), lwd=mylwd[1], lty=mylty(1), col=mycolors[1]);
+
+legend("topright", c("real dist.", "inferred dist.", "experimental data"), col=c(mycolors[1:2], "#A0A0A070"), lty=c(1:2, 1), lwd=c(3, 3, 15), box.lwd=0);
+
+text(18, 0.033, "new\nsupport", pos=4);
+arrows(19, 0.031, 35, 0.031, length=0.1);
+
+savePlot("formulation-fig1.png");
