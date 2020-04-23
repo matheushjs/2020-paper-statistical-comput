@@ -44,7 +44,7 @@ data = c(45.42578,37.14454,31.91805,78.38157,51.13203,76.95387,34.06098,34.73172
 hist(data, freq=FALSE, border=F, col="#A0A0A070", xlab="x", ylab="density", xlim=c(0, 100), ylim=c(0, 0.035));
 
 # Inferred dist
-lines(x, mydist(x), type="l", lwd=mylwd[2], col=mycolors[2], lty=mylty(2));
+lines(x[x>6*pi], mydist(x[x>6*pi]), type="l", lwd=mylwd[2], col=mycolors[2], lty=mylty(2));
 abline(v=6*pi, col=1, lwd=2, lty="12");
 
 # Real dist
@@ -52,7 +52,7 @@ lines(x, dgamma(x, shape=params[1], scale=params[2]), lwd=mylwd[1], lty=mylty(1)
 
 legend("topright", c("real dist.", "inferred dist.", "experimental data"), col=c(mycolors[1:2], "#A0A0A070"), lty=c(1:2, 1), lwd=c(3, 3, 15), box.lwd=0);
 
-text(18, 0.033, "new\nsupport", pos=4);
+text(18, 0.033, "shifted\norigin", pos=4);
 arrows(19, 0.031, 35, 0.031, length=0.1);
 
 savePlot("formulation-fig1.png");
