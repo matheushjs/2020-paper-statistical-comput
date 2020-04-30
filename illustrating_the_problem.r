@@ -65,3 +65,4 @@ text(18, 0.033, "shifted\norigin", pos=4);
 arrows(19, 0.031, 35, 0.031, length=0.1);
 
 savePlot("formulation-fig1.png");
+system("convert formulation-fig1.png -crop 650x316+4+72 formulation-fig1.png");
