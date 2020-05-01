@@ -36,9 +36,9 @@ difference = function(params){
 	-sum(log(mydist(slice, shape=params[1], scale=params[2])) * 1.15*dgamma(slice, shape=realParams[1], scale=realParams[2]));
 }
 
-params = optim(c(3, 9), difference, method="L-BFGS", lower=c(1e-3, 1e-3))$par;
-print(params);
-#params =  # What the above optimization finds
+#params = optim(c(3, 9), difference, method="L-BFGS", lower=c(1e-3, 1e-3))$par;
+#print(params);
+params = c(2.590555, 10.892933); # What the above optimization finds
 
 #data = rgamma(n=10, shape=realParams[1], scale=realParams[2]);
 #print(data);
