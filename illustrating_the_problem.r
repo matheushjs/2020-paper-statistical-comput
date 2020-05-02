@@ -65,10 +65,10 @@ legend("topright", c("real dist.", "inferred dist.", "trunc. real dist.", "exper
 text(18, 0.033, "shifted\norigin", pos=4);
 arrows(19, 0.031, 35, 0.031, length=0.1);
 
-savePlot("formulation-fig1.png");
-system("convert formulation-fig1.png -crop 624x316+40+72 formulation-fig1.png");
+savePlot("fig1.png");
+system("convert fig1.png -crop 624x316+40+72 fig1.png");
 
-img = image_read("formulation-fig1.png");
+img = image_read("fig1.png");
 img = image_convert(img, type="grayscale");
 dev.new();
 plot(img);
@@ -91,10 +91,10 @@ legend("topright", c("trunc. real dist.", "inferred dist.", "experimental data")
 text(18, 0.033, "shifted\norigin", pos=4);
 arrows(19, 0.031, 35, 0.031, length=0.1);
 
-savePlot("formulation-fig2.png");
-system("convert formulation-fig2.png -crop 624x316+40+72 formulation-fig2.png");
+savePlot("fig2.png");
+system("convert fig2.png -crop 624x316+40+72 fig2.png");
 
-img = image_read("formulation-fig2.png");
+img = image_read("fig2.png");
 img = image_convert(img, type="grayscale");
 dev.new();
 plot(img);
@@ -159,10 +159,10 @@ for(i in 1:5){
 	legend(myx[i], 0.039, yjust=0, legend=legends[[i]], pch=19, col=cols[i], box.lwd=0, pt.cex=2);
 }
 
-savePlot("formulation-fig3.png");
-system("convert formulation-fig3.png -crop 624x316+40+72 formulation-fig3.png");
+savePlot("fig3.png");
+system("convert fig3.png -crop 624x316+40+72 fig3.png");
 
-img = image_read("formulation-fig3.png");
+img = image_read("fig3.png");
 img = image_convert(img, type="grayscale");
 dev.new();
 plot(img);
