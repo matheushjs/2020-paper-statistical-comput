@@ -21,8 +21,8 @@ dev.new(width=scale*12, height=scale*8);
 
 realParams = c(8.243800, 5.647846);
 
-mydist = function(x, shape, scale){
-	dgamma(x - 6*pi, shape=shape, scale=scale);
+mydist = function(x, shape, scale, c=6*pi){
+	dgamma(x - c, shape=shape, scale=scale);
 }
 
 x = seq(0, 400, length=5000);
@@ -74,8 +74,6 @@ img = image_convert(img, type="grayscale");
 dev.new();
 plot(img);
 
-
-
 dev.new(width=scale*12, height=scale*8);
 
 hist(data, freq=FALSE, border=F, col="#A0A0A070", xlim=c(0, 100), ylim=c(0, 0.035), axes=FALSE, xlab="", ylab="");
@@ -99,6 +97,7 @@ img = image_read("fig2.png");
 img = image_convert(img, type="grayscale");
 dev.new();
 plot(img);
+
 
 
 dev.new(width=scale*12, height=scale*8);
@@ -169,3 +168,72 @@ dev.new();
 plot(img);
 
 
+
+
+dev.new(width=scale*12, height=scale*8);
+
+plot(c(-1,-1), xlim=c(0, 100), ylim=c(0, 0.055), axes=FALSE, xlab="", ylab="");
+axis(1, pos=0);
+axis(2, pos=0);
+title(xlab="x", ylab="density", line=1);
+
+plotFuncDiff = function(x, y1, y2, ...){
+	forwardPart  = cbind(x, y1);
+	backwardPart = cbind(rev(x), rev(y2));
+	all = rbind(forwardPart, backwardPart, c(x[1], y1[1]));
+	polygon(all, ...);
+}
+
+#lines(x[x>6*pi], mydist(x[x>6*pi], params[1], params[2]), type="l", lwd=mylwd[2], col=mycolors[2], lty=mylty[2]);
+#abline(v=6*pi, col=1, lwd=2, lty="12");
+
+#lines(x[x > 6*pi], dgamma(x[x > 6*pi], shape=realParams[1], scale=realParams[2]) / pgamma(6*pi, shape=realParams[1], scale=realParams[2], lower.tail=FALSE), lwd=mylwd[1], lty=mylty[1], col=mycolors[1]);
+
+f = function(c, raiseY=0, ...){
+	difference = function(params){
+		slice = x[x > c];
+		-sum(log(mydist(slice, shape=params[1], scale=params[2], c=c)) * dgamma(slice, shape=realParams[1], scale=realParams[2]));
+	}
+
+	mockData = rgamma(n=2000, shape=realParams[1], scale=realParams[2]) - c;
+	initShape = 2;
+	initScale = mean(mockData[mockData > 0]) / initShape;
+
+	params = optim(c(initShape, initScale), difference, method="L-BFGS", lower=c(1e-3, 1e-3))$par;
+	print(params);
+
+	# abline(v=c, lty="13", lwd=2);
+	plotFuncDiff(
+		x[x > c],
+		mydist(x[x > c], params[1], params[2], c=c) + raiseY,
+		dgamma(x[x > c], shape=realParams[1], scale=realParams[2]) / pgamma(c, shape=realParams[1], scale=realParams[2], lower.tail=FALSE) + raiseY,
+		...
+	);
+
+	# Estimate area under curve
+	y1 = mydist(x[x > c], params[1], params[2], c=c);
+	y2 = dgamma(x[x > c], shape=realParams[1], scale=realParams[2]) / pgamma(c, shape=realParams[1], scale=realParams[2], lower.tail=FALSE);
+	diffs = abs(y1 - y2);
+	diffs = diffs[2:length(diffs)];
+	
+	sum(diff(x[x > c]) * diffs);
+}
+
+allC = c(35, 30, 25, 20, 15, 10, 5);
+allCols = viridis(length(allC)+1, alpha=0.8)[1:length(allC)];
+areas = seq_along(allC);
+for(i in 1:length(allC)){
+	areas[i] = f(allC[i], 0.002*(length(allC) - i), col=allCols[i]);
+}
+
+legend("topright", paste("c = ", allC, ", area = ", round(areas, digits=3)), col=allCols, pch=15, pt.cex=2.5, box.lwd=0);
+#text(18, 0.033, "shifted\norigin", pos=4);
+#arrows(19, 0.031, 35, 0.031, length=0.1);
+
+savePlot("fig4.png");
+system("convert fig4.png -crop 624x316+40+72 fig4.png");
+
+img = image_read("fig4.png");
+img = image_convert(img, type="grayscale");
+dev.new();
+plot(img);
