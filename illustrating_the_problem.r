@@ -1,18 +1,21 @@
 require(viridis);
+require(colorspace);
 require(magick);
 
+palette = sequential_hcl(n=6, "YlGnBu")
+
 mycolors = c(
-	"#000000FF",
-	"#FF0000FF",
-	3,
-	"#0000FFFF",
+	palette[1],
+	palette[2],
+	palette[3],
+	palette[4],
 	"#00FFFFFF",
 	"#FF00FFFF",
 	"#FFFF00FF",
 	"#999999FF"
 );
 
-mylwd = c(2, 5, 4);
+mylwd = c(3, 5, 4);
 mylty = c(1, 2, 3);
 
 graphics.off();
@@ -51,7 +54,7 @@ axis(2, pos=0);
 title(xlab="x", ylab="density", line=1);
 
 # Inferred dist
-lines(x[x>6*pi], mydist(x[x>6*pi], params[1], params[2]), type="l", lwd=mylwd[2], col=mycolors[2], lty=mylty[2]);
+lines(x[x>6*pi], dgamma(x[x>6*pi], shape=realParams[1], scale=realParams[2]) * pgamma(6*pi, shape=realParams[1], scale=realParams[2], lower=FALSE)**-1 * 1.05, type="l", lwd=mylwd[2], col=mycolors[2], lty=mylty[2]);
 abline(v=6*pi, col=1, lwd=2, lty="12");
 
 # Real dist
@@ -61,9 +64,9 @@ lines(x, dgamma(x, shape=realParams[1], scale=realParams[2]), lwd=mylwd[1], lty=
 #lines(x, dgamma(x, shape=realParams[1], scale=realParams[2]), lwd=mylwd[1], lty=mylty[1], col=mycolors[3]);
 
 #legend("topright", c("real dist.", "inferred dist.", "trunc. real dist.", "experimental data"), col=c(mycolors[1:3], "#A0A0A070"), lty=c(mylty[1:3], 1), lwd=c(mylwd[1:3]/1.8, 15), box.lwd=0);
-legend("topright", c("real dist.", "inferred dist.", "experimental data"), col=c(mycolors[1:2], "#A0A0A070"), lty=c(mylty[1:2], 1), lwd=c(mylwd[1:2]/1.8, 15), box.lwd=0);
+legend("topright", c("real dist.", "truncated dist.", "experimental data"), col=c(mycolors[1:2], "#A0A0A070"), lty=c(mylty[1:2], 1), lwd=c(mylwd[1:2]/1.8, 15), box.lwd=0);
 
-text(18, 0.033, "shifted\norigin", pos=4);
+text(18, 0.033, expression(group("[", list(c, infinity), ")")), pos=4);
 arrows(19, 0.031, 35, 0.031, length=0.1);
 
 savePlot("fig1.png");
@@ -81,12 +84,12 @@ axis(1, pos=0);
 axis(2, pos=0);
 title(xlab="x", ylab="density", line=1);
 
-lines(x[x>6*pi], mydist(x[x>6*pi], params[1], params[2]), type="l", lwd=mylwd[2], col=mycolors[2], lty=mylty[2]);
+lines(x[x>6*pi], mydist(x[x>6*pi], params[1], params[2]), type="l", lwd=mylwd[1], col=mycolors[3], lty=mylty[1]);
 abline(v=6*pi, col=1, lwd=2, lty="12");
 
-lines(x[x > 6*pi], dgamma(x[x > 6*pi], shape=realParams[1], scale=realParams[2]) / pgamma(6*pi, shape=realParams[1], scale=realParams[2], lower.tail=FALSE), lwd=mylwd[1], lty=mylty[1], col=mycolors[1]);
+lines(x[x > 6*pi], dgamma(x[x > 6*pi], shape=realParams[1], scale=realParams[2]) / pgamma(6*pi, shape=realParams[1], scale=realParams[2], lower.tail=FALSE), lwd=mylwd[2], lty=mylty[2], col=mycolors[2]);
 
-legend("topright", c("trunc. real dist.", "inferred dist.", "experimental data"), col=c(mycolors[1:2], "#A0A0A070"), lty=mylty[1:2], lwd=c(mylwd[1:2]/1.8, 15), box.lwd=0);
+legend("topright", c("trunc. real dist.", "inferred dist.", "experimental data"), col=c(mycolors[2:3], "#A0A0A070"), lty=mylty[2:1], lwd=c(mylwd[2:1]/1.8, 15), box.lwd=0);
 #text(18, 0.033, "shifted\norigin", pos=4);
 #arrows(19, 0.031, 35, 0.031, length=0.1);
 
