@@ -2,14 +2,10 @@ require(viridis);
 require(colorspace);
 require(magick);
 
-palette = sequential_hcl(n=6, "YlGnBu")
-
 mycolors = c(
-	palette[1],
-	palette[2],
-	palette[3],
-	palette[4],
-	"#00FFFFFF",
+	"#000000",
+	"red",
+	"blue",
 	"#FF00FFFF",
 	"#FFFF00FF",
 	"#999999FF"
