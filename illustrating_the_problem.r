@@ -209,6 +209,8 @@ f = function(c, raiseY=0, ...){
 		...
 	);
 
+	segments(c, 0, c, raiseY, lwd=3, lty="12", col="#00000077");
+
 	# Estimate area under curve
 	y1 = mydist(x[x > c], params[1], params[2], c=c);
 	y2 = dgamma(x[x > c], shape=realParams[1], scale=realParams[2]) / pgamma(c, shape=realParams[1], scale=realParams[2], lower.tail=FALSE);
@@ -218,14 +220,14 @@ f = function(c, raiseY=0, ...){
 	sum(diff(x[x > c]) * diffs);
 }
 
-allC = c(35, 30, 25, 20, 15, 10, 5);
+allC = c(25, 20, 15, 10, 7.5, 5);
 allCols = viridis(length(allC)+1, alpha=0.8)[1:length(allC)];
 areas = seq_along(allC);
 for(i in 1:length(allC)){
-	areas[i] = f(allC[i], 0.002*(length(allC) - i), col=allCols[i]);
+	areas[i] = f(allC[i], 0.004*(length(allC) - i), col=allCols[i]);
 }
 
-legend("topright", paste("c = ", allC, ", area = ", round(areas, digits=3)), col=allCols, pch=15, pt.cex=2.5, box.lwd=0);
+legend("topright", paste("c = ", allC, "	area = ", round(areas, digits=3)), col=allCols, pch=15, pt.cex=2.5, box.lwd=0);
 #text(18, 0.033, "shifted\norigin", pos=4);
 #arrows(19, 0.031, 35, 0.031, length=0.1);
 
