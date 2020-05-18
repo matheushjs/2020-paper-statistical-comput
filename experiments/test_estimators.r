@@ -1,6 +1,6 @@
 require(elfDistr);
 
-N = 100;
+N = 10;
 tries = 10;
 
 df = NULL;
@@ -55,6 +55,10 @@ for(b in c(0.5, 1, 10)){ # 5 and 20 good too
 #for(b in c(15)){
 
 	min.median = qkwcwg(1 - (1 - 0.5)**(1/N), alpha, beta, gamma, a, b);
+
+	# Degenerate model, we don't want it
+	if(min.median < 1e-5)
+		next;
 
 	data = matrix(rkwcwg(n=N*tries, alpha, beta,gamma, a, b), nrow=tries);
 	mins = apply(data, 1, min);
