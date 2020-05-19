@@ -1,6 +1,6 @@
 require(elfDistr);
 
-N = 10;
+N = 100;
 tries = 10;
 
 df = NULL;
@@ -56,38 +56,75 @@ for(b in c(0.5, 1, 10)){ # 5 and 20 good too
 
 	min.median = qkwcwg(1 - (1 - 0.5)**(1/N), alpha, beta, gamma, a, b);
 
+	# 1% and 5% quantiles of the minimum distribution
+	quantile05 = qkwcwg(1 - (1 - 0.05)**(1/N), alpha, beta, gamma, a, b);
+	quantile01 = qkwcwg(1 - (1 - 0.01)**(1/N), alpha, beta, gamma, a, b);
+
 	# Degenerate model, we don't want it
 	if(min.median < 1e-5)
 		next;
 
 	data = matrix(rkwcwg(n=N*tries, alpha, beta,gamma, a, b), nrow=tries);
-	mins = apply(data, 1, min);
-	stddev = apply(data, 1, sd);
-	means = apply(data, 1, mean);
 
-	estim1 = mins - mins * (stddev / means) / log10(N);
-	estim2 = mins - stddev / N;
-	estim3 = mins - stddev * sqrt(log(log(N)) / (2*N));
-	estim4 = mins - stddev * sqrt(-log(0.05/2) / (2*N));
+	# Filter NA/Infinite elements
+	failureRate = sum(!is.finite(data)) / tries;
+	if(failureRate > 0.05*N)
+		cat("High failure rate: ", failureRate);
 
-	# rkwcwg often results in Inf. Here we take the maximum of those that are finite.
-	estim1 = max(estim1[is.finite(estim1)]);
-	estim2 = max(estim2[is.finite(estim2)]);
-	estim3 = max(estim3[is.finite(estim3)]);
-	estim4 = max(estim4[is.finite(estim4)]);
+	mins   = apply(data, 1, function(row) min(row[is.finite(row)]));
+	stddev = apply(data, 1, function(row) sd(row[is.finite(row)]));
+	means  = apply(data, 1, function(row) mean(row[is.finite(row)]));
 
-	aux = c(max(0, estim1), max(0, estim2), max(0, estim3), max(0, estim4));
-	cdfs = pkwcwg(aux, alpha, beta, gamma, a, b);
+	data.mean = mean(data);
 
-	# 1% and 5% quantiles of the minimum distribution
-	quantile05 = qkwcwg(1 - (1 - 0.05)**(1/N), alpha, beta, gamma, a, b);
-	quantile01 = qkwcwg(1 - (1 - 0.01)**(1/N), alpha, beta, gamma, a, b);
+	estim = list();
+	estim[[1]] = mins
+	#estim[[2]] = mins - mins * (stddev / means) / log10(N);
+	#estim[[3]] = mins - stddev / N;
+	#estim[[4]] = mins - stddev * sqrt(log(log(N)) / (2*N));
+	#estim[[5]] = mins - stddev * sqrt(-log(0.05/2) / (2*N));
+	estim[[2]] = mins - mins * (stddev / means) / log10(N);
+	estim[[3]] = mins - mins * (stddev / means) / N;
+	estim[[4]] = mins - mins * (stddev / means) * sqrt(log(log(N)) / (2*N));
+	estim[[5]] = mins - mins * (stddev / means) * sqrt(-log(0.05/2) / (2*N));
 
-	#min.max = qkwcwg(1 - (1 - 0.99)**(1/N), alpha, beta, gamma, a, b);
-	#min.mean = integrate(function(x) n*(1 - pkwcwg(x, alpha, beta, gamma, a, b))**(n-1)*dkwcwg(x, alpha, beta, gamma, a, b), lower=0, upper=min.max)$value;
+	# We will get:
+	# 1) The mean distance from the estimator to the 01 and 05 min-quantiles
+	# 2) The mean cdf on the estimator
 
-	names = c("alpha", "beta", "gamma", "a", "b", "min.median", "data.stddev", "data.mean", "min.05", "min.01", "c1", "c2", "c3", "c4", "cdf1", "cdf2", "cdf3", "cdf4");
-	row = c(alpha, beta, gamma, a, b, min.median, sd(data), mean(data), quantile05, quantile01, estim1, estim2, estim3, estim4, cdfs);
+	dist05 = list();
+	dist01 = list();
+	cdf = list();
+	for(i in 1:5){
+		dist05[[i]] = (estim[[i]] - quantile05) / mean(data);
+		dist01[[i]] = (estim[[i]] - quantile01) / mean(data);
+
+		# Negative values should give cdf = 0 for the KW-CWG
+		aux = pkwcwg(estim[[i]], alpha, beta, gamma, a, b);
+		aux[which(estim[[i]] <= 0)] = 0;
+		cdf[[i]] = aux;
+	}
+
+	means.dist05 = rep(0, length(estim));
+	means.dist01 = rep(0, length(estim));
+	means.cdf    = rep(0, length(estim));
+	for(i in 1:length(estim)){
+		means.dist05[i] = mean(dist05[[i]]);
+		means.dist01[i] = mean(dist01[[i]]);
+		means.cdf[i]    = mean(cdf[[i]]);
+	}
+
+	names = c(
+		"alpha", "beta", "gamma", "a", "b",
+		"data.stddev", "data.mean",
+		paste("dist05-c", 1:5, sep=""),
+		paste("dist01-c", 1:5, sep=""),
+		paste("cdf", 1:5, sep="")
+	);
+	
+	row = c(alpha, beta, gamma, a, b,
+			sd(data), mean(data), # yes we do sd() and mean() over whole matrix
+			means.dist05, means.dist01, means.cdf);
 	print(names);
 	print(row);
 
