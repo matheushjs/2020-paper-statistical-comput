@@ -286,7 +286,7 @@ points(est4, y, cex=mycex, col=cols[4], pch=19);
 y = y + 0.008
 segments(est5, 0, y1=y, col=cols[5], lwd=lwd, lty="12");
 points(est5, y, cex=mycex, col=cols[5], pch=19);
-text(est5-1, y+0.01, "0.05%");
+text(est5-1, y+0.01, "5%");
 
 q = 0.01
 # I will just recycle the names here... sorry I'm lazy
@@ -322,7 +322,7 @@ points(est4, y, cex=mycex, col=cols[4], pch=19);
 y = y + 0.008
 segments(est5, 0, y1=y, col=cols[5], lwd=lwd, lty="12");
 points(est5, y, cex=mycex, col=cols[5], pch=19);
-text(est5-1, y+0.01, "0.01%");
+text(est5-1, y+0.01, "1%");
 
 legend("topright", c("200", "100", "50", "20", "10"), title="sample size", yjust=0, pch=19, col=rev(cols), box.lwd=0, pt.cex=2);
 
