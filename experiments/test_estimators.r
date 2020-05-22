@@ -1,6 +1,6 @@
 require(elfDistr);
 
-N = 100;
+N = 10;
 tries = 10;
 
 df = NULL;
@@ -94,10 +94,12 @@ for(b in c(0.5, 1, 10)){ # 5 and 20 good too
 
 	dist05 = list();
 	dist01 = list();
+	distMin = list();
 	cdf = list();
 	for(i in 1:5){
 		dist05[[i]] = (estim[[i]] - quantile05) / mean(data);
 		dist01[[i]] = (estim[[i]] - quantile01) / mean(data);
+		distMin[[i]] = (mins - estim[[i]]) / mean(data);
 
 		# Negative values should give cdf = 0 for the KW-CWG
 		aux = pkwcwg(estim[[i]], alpha, beta, gamma, a, b);
@@ -105,12 +107,14 @@ for(b in c(0.5, 1, 10)){ # 5 and 20 good too
 		cdf[[i]] = aux;
 	}
 
-	means.dist05 = rep(0, length(estim));
-	means.dist01 = rep(0, length(estim));
-	means.cdf    = rep(0, length(estim));
+	means.dist05  = rep(0, length(estim));
+	means.dist01  = rep(0, length(estim));
+	means.distMin = rep(0, length(estim));
+	means.cdf     = rep(0, length(estim));
 	for(i in 1:length(estim)){
 		means.dist05[i] = mean(dist05[[i]]);
 		means.dist01[i] = mean(dist01[[i]]);
+		means.distMin[i] = mean(distMin[[i]]);
 		means.cdf[i]    = mean(cdf[[i]]);
 	}
 
@@ -119,12 +123,13 @@ for(b in c(0.5, 1, 10)){ # 5 and 20 good too
 		"data.stddev", "data.mean",
 		paste("dist05-c", 1:5, sep=""),
 		paste("dist01-c", 1:5, sep=""),
+		paste("distMin-c", 1:5, sep=""),
 		paste("cdf", 1:5, sep="")
 	);
 	
 	row = c(alpha, beta, gamma, a, b,
 			sd(data), mean(data), # yes we do sd() and mean() over whole matrix
-			means.dist05, means.dist01, means.cdf);
+			means.dist05, means.dist01, means.distMin, means.cdf);
 	print(names);
 	print(row);
 
