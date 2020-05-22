@@ -27,12 +27,9 @@ mydist = function(x, shape, scale, c=6*pi){
 x = seq(0, 400, length=5000);
 
 # Now we find the closest gamma near that function
-difference = function(params){
-	slice = x[x > 6.0*pi];
-	#print(log(mydist(slice, shape=params[1], scale=params[2])) * dgamma(slice, shape=realParams[1], scale=realParams[2]));
-	#print(params);
-	#print(-sum(log(mydist(slice, shape=params[1], scale=params[2])) * dgamma(slice, shape=realParams[1], scale=realParams[2])));
-	-sum(log(mydist(slice, shape=params[1], scale=params[2])) * 1.15*dgamma(slice, shape=realParams[1], scale=realParams[2]));
+difference = function(params, c=6*pi){
+	slice = x[x > c];
+	-sum(log(mydist(slice, shape=params[1], scale=params[2], c=c)) * dgamma(slice, shape=realParams[1], scale=realParams[2]));
 }
 
 #params = optim(c(3, 9), difference, method="L-BFGS", lower=c(1e-3, 1e-3))$par;
@@ -54,10 +51,7 @@ lines(x[x>6*pi], dgamma(x[x>6*pi], shape=realParams[1], scale=realParams[2]) * p
 abline(v=6*pi, col=1, lwd=2, lty="12");
 
 # Real dist
-#lines(x[x > 6*pi], dgamma(x[x > 6*pi], shape=realParams[1], scale=realParams[2]) / pgamma(6*pi, shape=realParams[1], scale=realParams[2], lower.tail=FALSE), lwd=mylwd[3], lty=mylty[3], col=mycolors[3]);
 lines(x, dgamma(x, shape=realParams[1], scale=realParams[2]), lwd=mylwd[1], lty=mylty[1], col=mycolors[1]);
-#lines(x[x > 6*pi], 1.15*dgamma(x[x > 6*pi], shape=realParams[1], scale=realParams[2]) / pgamma(6*pi, shape=realParams[1], scale=realParams[2], lower.tail=FALSE), lwd=mylwd[3], lty=mylty[3], col=mycolors[1]);
-#lines(x, dgamma(x, shape=realParams[1], scale=realParams[2]), lwd=mylwd[1], lty=mylty[1], col=mycolors[3]);
 
 #legend("topright", c("real dist.", "inferred dist.", "trunc. real dist.", "experimental data"), col=c(mycolors[1:3], "#A0A0A070"), lty=c(mylty[1:3], 1), lwd=c(mylwd[1:3]/1.8, 15), box.lwd=0);
 legend("topright", c("real dist.", "truncated dist.", "experimental data"), col=c(mycolors[1:2], "#A0A0A070"), lty=c(mylty[1:2], 1), lwd=c(mylwd[1:2]/1.8, 15), box.lwd=0);
