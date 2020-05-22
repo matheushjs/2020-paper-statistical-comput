@@ -101,6 +101,7 @@ plot(img);
 
 dev.new(width=scale*12, height=scale*8);
 
+data = data[1:10];
 hist(data, freq=FALSE, border=F, col="#A0A0A070", xlim=c(0, 100), ylim=c(0, 0.045), axes=FALSE, xlab="", ylab="");
 axis(1, pos=0);
 axis(2, pos=0);
@@ -112,9 +113,9 @@ n = length(data);
 CV = sd(data) / mean(data);
 est1 = min(data);
 est2 = min(data) - abs(min(data)) * (CV / log10(n));
-est3 = min(data) - abs(min(data)) * (1 / n);
-est4 = min(data) - abs(min(data)) * 1 * sqrt(log(log(n)) / (2*n));
-est5 = min(data) - abs(min(data)) * 1 * sqrt(-log(0.05/2) / (2*n));
+est3 = min(data) - abs(min(data)) * (CV / n);
+est4 = min(data) - abs(min(data)) * CV * sqrt(log(log(n)) / (2*n));
+est5 = min(data) - abs(min(data)) * CV * sqrt(-log(0.05/2) / (2*n));
 
 y = 0.02
 lwd = 4
@@ -135,14 +136,14 @@ points(est4, y, cex=mycex, col=cols[3], pch=19);
 #text(est4, y+0.002, "est4");
 
 y = y + 0.003
-segments(est2, 0, y1=y, col=cols[4], lwd=lwd, lty="12");
-points(est2, y, cex=mycex, col=cols[4], pch=19);
-#text(est2, y+0.002, "est2");
+segments(est5, 0, y1=y, col=cols[4], lwd=lwd, lty="12");
+points(est5, y, cex=mycex, col=cols[4], pch=19);
+#text(est5, y+0.002, "est5");
 
 y = y + 0.003
-segments(est5, 0, y1=y, col=cols[5], lwd=lwd, lty="12");
-points(est5, y, cex=mycex, col=cols[5], pch=19);
-#text(est5, y+0.002, "est5");
+segments(est2, 0, y1=y, col=cols[5], lwd=lwd, lty="12");
+points(est2, y, cex=mycex, col=cols[5], pch=19);
+#text(est2, y+0.002, "est2");
 
 legends=list(
 	"sample\nmin",
@@ -151,9 +152,9 @@ legends=list(
 	expression(sqrt(over(log(log(n)), 2*n))),
 	expression(sqrt(over(-log(nu/2), 2*n)))
 );
-legends = legends[c(1,3,4,2,5)];
+legends = legends[c(1,3,4,5,2)];
 
-myx = rev(c(0.5, 25, 45, 70, 80)) + 5;
+myx = rev(c(0.5, 20, 45, 70, 80)) + 5;
 for(i in 1:5){
 	legend(myx[i], 0.039, yjust=0, legend=legends[[i]], pch=19, col=cols[i], box.lwd=0, pt.cex=2);
 }
@@ -165,8 +166,6 @@ img = image_read("fig3.png");
 img = image_convert(img, type="grayscale");
 dev.new();
 plot(img);
-
-
 
 
 dev.new(width=scale*12, height=scale*8);
