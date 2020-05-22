@@ -247,18 +247,18 @@ dev.new(width=scale*12, height=scale*8);
 #hist(data, freq=FALSE, border=F, col="#A0A0A070", xlim=c(0, 100), ylim=c(0, 0.045), axes=FALSE, xlab="", ylab="");
 
 x = seq(0, 45, length=2000);
-plot(x, dgamma(x, shape=160, scale=0.2), lwd=mylwd[1], lty=mylty[1], col=mycolors[1], axes=FALSE, xlab="", ylab="", type="l", xlim=c(20, 45));
+plot(x, dweibull(x, shape=18, scale=35), lwd=mylwd[1], lty=mylty[1], col=mycolors[1], axes=FALSE, xlab="", ylab="", type="l", xlim=c(15, 40));
 axis(1, pos=0);
-axis(2, pos=20);
+axis(2, pos=15);
 title(xlab="x", ylab="density", line=1);
 
 q = 0.05
 # I will just recycle the names here... sorry I'm lazy
-est1 = qgamma(1 - (1 - q)**(1/10), shape=160, scale=0.2);
-est2 = qgamma(1 - (1 - q)**(1/20), shape=160, scale=0.2);
-est3 = qgamma(1 - (1 - q)**(1/50), shape=160, scale=0.2);
-est4 = qgamma(1 - (1 - q)**(1/100), shape=160, scale=0.2);
-est5 = qgamma(1 - (1 - q)**(1/200), shape=160, scale=0.2);
+est1 = qweibull(1 - (1 - q)**(1/10), shape=18, scale=35);
+est2 = qweibull(1 - (1 - q)**(1/20), shape=18, scale=35);
+est3 = qweibull(1 - (1 - q)**(1/50), shape=18, scale=35);
+est4 = qweibull(1 - (1 - q)**(1/100), shape=18, scale=35);
+est5 = qweibull(1 - (1 - q)**(1/200), shape=18, scale=35);
 
 y = 0.05
 lwd = 4
@@ -268,33 +268,33 @@ segments(est1, 0, y1=y, col=cols[1], lwd=lwd, lty="12");
 points(est1, y, cex=mycex, col=cols[1], pch=19);
 #text(est1, y+0.02, "10");
 
-y = y + 0.008
+y = y + 0.012
 segments(est2, 0, y1=y, col=cols[2], lwd=lwd, lty="12");
 points(est2, y, cex=mycex, col=cols[2], pch=19);
 #text(est2, y+0.02, "20");
 
-y = y + 0.008
+y = y + 0.012
 segments(est3, 0, y1=y, col=cols[3], lwd=lwd, lty="12");
 points(est3, y, cex=mycex, col=cols[3], pch=19);
 #text(est3, y+0.02, "50");
 
-y = y + 0.008
+y = y + 0.012
 segments(est4, 0, y1=y, col=cols[4], lwd=lwd, lty="12");
 points(est4, y, cex=mycex, col=cols[4], pch=19);
 #text(est4, y+0.02, "100");
 
-y = y + 0.008
+y = y + 0.012
 segments(est5, 0, y1=y, col=cols[5], lwd=lwd, lty="12");
 points(est5, y, cex=mycex, col=cols[5], pch=19);
 text(est5-1, y+0.01, "5%");
 
 q = 0.01
 # I will just recycle the names here... sorry I'm lazy
-est1 = qgamma(1 - (1 - q)**(1/10), shape=160, scale=0.2);
-est2 = qgamma(1 - (1 - q)**(1/20), shape=160, scale=0.2);
-est3 = qgamma(1 - (1 - q)**(1/50), shape=160, scale=0.2);
-est4 = qgamma(1 - (1 - q)**(1/100), shape=160, scale=0.2);
-est5 = qgamma(1 - (1 - q)**(1/200), shape=160, scale=0.2);
+est1 = qweibull(1 - (1 - q)**(1/10), shape=18, scale=35);
+est2 = qweibull(1 - (1 - q)**(1/20), shape=18, scale=35);
+est3 = qweibull(1 - (1 - q)**(1/50), shape=18, scale=35);
+est4 = qweibull(1 - (1 - q)**(1/100), shape=18, scale=35);
+est5 = qweibull(1 - (1 - q)**(1/200), shape=18, scale=35);
 
 y = 0.02
 lwd = 4
@@ -304,27 +304,27 @@ segments(est1, 0, y1=y, col=cols[1], lwd=lwd, lty="12");
 points(est1, y, cex=mycex, col=cols[1], pch=19);
 #text(est1, y+0.02, "10");
 
-y = y + 0.008
+y = y + 0.012
 segments(est2, 0, y1=y, col=cols[2], lwd=lwd, lty="12");
 points(est2, y, cex=mycex, col=cols[2], pch=19);
 #text(est2, y+0.02, "20");
 
-y = y + 0.008
+y = y + 0.012
 segments(est3, 0, y1=y, col=cols[3], lwd=lwd, lty="12");
 points(est3, y, cex=mycex, col=cols[3], pch=19);
 #text(est3, y+0.02, "50");
 
-y = y + 0.008
+y = y + 0.012
 segments(est4, 0, y1=y, col=cols[4], lwd=lwd, lty="12");
 points(est4, y, cex=mycex, col=cols[4], pch=19);
 #text(est4, y+0.02, "100");
 
-y = y + 0.008
+y = y + 0.012
 segments(est5, 0, y1=y, col=cols[5], lwd=lwd, lty="12");
 points(est5, y, cex=mycex, col=cols[5], pch=19);
 text(est5-1, y+0.01, "1%");
 
-legend("topright", c("200", "100", "50", "20", "10"), title="sample size", yjust=0, pch=19, col=rev(cols), box.lwd=0, pt.cex=2);
+legend(17, 0.15, c("200", "100", "50", "20", "10"), title="sample size", yjust=0, pch=19, col=rev(cols), box.lwd=0, pt.cex=2, horiz=TRUE);
 
 savePlot("fig5.png");
 system("convert fig5.png -crop 624x316+40+72 fig5.png");
