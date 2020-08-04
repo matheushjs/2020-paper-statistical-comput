@@ -2,6 +2,7 @@ require(elfDistr);
 require(viridis);
 require(magick);
 require(stringr);
+require(colorspace);
 
 TRIALS = 10;
 
@@ -9,7 +10,7 @@ graphics.off();
 
 # We make a ton of histograms and then later we select which of them we want
 
-cols = inferno(TRIALS+1)[1:TRIALS];
+cols = qualitative_hcl("Set 2", n=TRIALS); # inferno(TRIALS+1)[1:TRIALS];
 for(i in 1:TRIALS){
 	scale = 0.4;
 	dev.new(width=scale*12, height=scale*6);
