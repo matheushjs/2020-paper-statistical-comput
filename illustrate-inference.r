@@ -1,8 +1,10 @@
 
-
-data = rgamma(n=20, shape=2.3, scale=2);
-likelihood = function(p) - sum(log(dgamma(data - p[3], shape=p[1], scale=p[2])));
-result = optim(par=c(1.1, 1.1, min(data) - 1/length(data)), fn=likelihood);
+N = 20;
+data = rgamma(n=N, shape=2.3, scale=2);
+c.init = min(data) - sd(data)/N;
+likelihood = function(p) -sum(log(dgamma(data - p[3], shape=p[1], scale=p[2])));
+result = optim(
+	par=c(1, 1, c.init), fn=likelihood);
 
 print(result);
 par = result$par;
