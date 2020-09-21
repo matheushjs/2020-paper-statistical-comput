@@ -112,8 +112,11 @@ getlwd = function(idx){
 #    - problem size of this experiment
 #    - machine in which the experiment was executed
 #    - algorithm in question
-experiment.files = function(){
-	data = read.csv("red-wine-20.csv");
+experiment.files = function(N=20000000){
+	data = read.csv("red-wine-quality.csv");
+
+	idx = sample(1:nrow(data), size=min(N, nrow(data)));
+	data = data[idx,];
 
 	dataset = data[,"alcohol"];
 	dataset;
@@ -235,21 +238,23 @@ generate.plots = function(fullDataset, minEstimator=FALSE, useC=FALSE, iteratedC
 	}
 
 	print(df, width=150)
-	write.csv(df, file=paste(outputName, ".csv", sep=""))
+	write.table(df, file=paste(outputName, ".csv", sep=""), sep=",", append=T, row.names=F)
 	savePlot(paste(outputName, ".png", sep=""), type="png")
 	graphics.off();
 }
 
 # main()
 
-fullDataset = experiment.files()
+for(i in 1:5){
+	fullDataset = experiment.files(N=100)
 
-generate.plots(fullDataset);
-generate.plots(fullDataset, useC=TRUE);
-generate.plots(fullDataset, iteratedC=TRUE);
+	generate.plots(fullDataset);
+	generate.plots(fullDataset, useC=TRUE);
+	generate.plots(fullDataset, iteratedC=TRUE);
 
-for(estim in paste("c", 1:4, sep=""))
-	generate.plots(fullDataset, minEstimator=estim);
+	for(estim in paste("c", 1:4, sep=""))
+		generate.plots(fullDataset, minEstimator=estim);
+}
 
 #dev.new(width=12, height=2.5*12);
 #par(mfrow=c(10, 4));
