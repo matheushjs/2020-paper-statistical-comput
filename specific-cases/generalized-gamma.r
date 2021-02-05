@@ -2,22 +2,25 @@ require(ggamma)
 
 setOption("width", 150);
 
-#a_list = c(0.5, 1, 10);
-b_list = c(0.7, 1, 10);
-k_list = c(0.7, 1, 10, 20);
+b_list = c(0.5, 0.7, 0.9, 1, 1.5, 2, 5, 10, 20, 100);
+k_list = c(0.5, 0.7, 0.9, 1, 1.5, 2, 5, 10, 20, 100);
 n_list = c(5, 10, 20, 50);
 
-#set.seed(1);
+set.seed(8396941); # generated randomly
 
-with.infer.c = function(){
+with.infer.c = function(dislodge = 50, reducedInitParams=F,
+						inferenceInitC = c("real", "estimator", "zero")){
 	result = NULL;
+
+	if(is.vector(inferenceInitC))
+		inferenceInitC = inferenceInitC[1];
 
 	#for(a in a_list)
 	for(b in b_list)
 	for(k in k_list)
 	for(n in n_list){
 		# Generate synthetic data
-		data = rggamma(n=n, a=1, b=b, k=k);
+		data = rggamma(n=n, a=1, b=b, k=k) + dislodge;
 
 		# Get the estimator for populational minimum (or low quantile)
 		c = min(data) - sd(data) * sqrt(log(log(n)) / (2*n) );
@@ -36,17 +39,18 @@ with.infer.c = function(){
 		}
 
 		# Try multiple initial parameters
-		initParams = rbind(
-			#c(1, 0.5, 0.5),
-			#c(1, 0.5,   1),
-			#c(1, 0.5,   2),
-			#c(1,   1, 0.5),
-			c(1,   1,   1)
-			#c(1,   1,   2),
-			#c(1,   2, 0.5),
-			#c(1,   2,   1),
-			#c(1,   2,   2)
-		);
+		if(reducedInitParams){
+			initParams = rbind(
+				c(1,   1,   1)
+			);
+		} else {
+			initParams = rbind(
+				c(1, 0.5, 0.5),
+				c(1, 0.5,   2),
+				c(1,   2, 0.5),
+				c(1,   2,   2)
+			);
+		}
 
 		allResults = list();                    # Return values from optim()
 		allValues = rep(0, nrow(initParams));   # Optimized -2l (l = log likelihood) values
@@ -68,18 +72,19 @@ with.infer.c = function(){
 		divergence_cb = function(x){
 			# Sometimes integrate() calls this function with negative argument, so we gotta prepare for that...
 			probs1 = rep(0, length(x));
-			if(c > 0){
-				probs1[x >= 0] = dggamma(x[x >= 0], a=1, b=b, k=k) / (1 - pggamma(c, a=1, b=b, k=k));
+			z = x - dislodge;
+			if(c > dislodge){
+				probs1[z >= 0] = dggamma(z[z >= 0], a=1, b=b, k=k) / (1 - pggamma(c - dislodge, a=1, b=b, k=k));
 			} else {
-				probs1[x >= 0] = dggamma(x[x >= 0], a=1, b=b, k=k);
+				probs1[z >= 0] = dggamma(z[z >= 0], a=1, b=b, k=k);
 			}
 
 			z = x - c;
 			probs2 = rep(0, length(x));
-			if(c > 0){
+			if(c > dislodge){
 				probs2[z >= 0] = dggamma(z[z >= 0], a=par[1], b=par[2], k=par[3]);
 			} else {
-				probs2[z >= 0] = dggamma(z[z >= 0], a=par[1], b=par[2], k=par[3]) / (1 - pggamma(-c, a=par[1], b=par[2], k=par[3]));
+				probs2[z >= 0] = dggamma(z[z >= 0], a=par[1], b=par[2], k=par[3]) / (1 - pggamma(dislodge - c, a=par[1], b=par[2], k=par[3]));
 			}
 
 			result = abs(probs1 - probs2);
@@ -88,7 +93,9 @@ with.infer.c = function(){
 			result
 		}
 
-		divergence_c = integrate(divergence_cb, c, Inf);
+		divergence_c = integrate(divergence_cb, max(c, dislodge), Inf, stop.on.error=F);
+		error = FALSE;
+		error = error || (divergence_c$message != "OK");
 		print("------------------------------------------------------------------------------------------");
 		print(paste("N: ", n, "  |  KL: ", divergence_c$value, "  |  likelihood: ", bestResult_c$value, "  |  convergence: ", bestResult_c$convergence, "  |  estimate: ", c, "  |  params: ", par[1], par[2], par[3]));
 
@@ -105,11 +112,21 @@ with.infer.c = function(){
 			-2 * sum(allLogs);
 		}
 
+		if(inferenceInitC == "real"){
+			initC = dislodge;
+		} else if(inferenceInitC == "estimator"){
+			initC = c;
+		} else if(inferenceInitC == "zero"){
+			initC = 0;
+		} else {
+			stop("Wrong value of inferenceInitC");
+		}
+
 		allResults = list();
 		allValues = rep(0, nrow(initParams));
 		inf_counts = NULL;
 		for(j in 1:nrow(initParams)){
-			allResults[[j]] = optim(c(initParams[j,], c), likelihood, method="L-BFGS", lower=c(0, 0, 0, -Inf), control=list(maxit=1000));
+			allResults[[j]] = optim(c(initParams[j,], initC), likelihood, method="L-BFGS", lower=c(0, 0, 0, -Inf), control=list(maxit=1000));
 			inf_counts = c(inf_counts, count);
 			count = 0;
 			allValues[j] = allResults[[j]]$value;
@@ -121,19 +138,20 @@ with.infer.c = function(){
 
 		divergence_cb = function(x){
 			# Sometimes integrate() calls this function with negative argument, so we gotta prepare for that...
+			z = x - dislodge;
 			probs1 = rep(0, length(x));
-			if(par[4] > 0){
-				probs1[x >= 0] = dggamma(x[x >= 0], a=1, b=b, k=k) / (1 - pggamma(par[4], a=1, b=b, k=k));
+			if(par[4] > dislodge){
+				probs1[z >= 0] = dggamma(z[z >= 0], a=1, b=b, k=k) / (1 - pggamma(par[4] - dislodge, a=1, b=b, k=k));
 			} else {
-				probs1[x >= 0] = dggamma(x[x >= 0], a=1, b=b, k=k);
+				probs1[z >= 0] = dggamma(z[z >= 0], a=1, b=b, k=k);
 			}
 
 			z = x - par[4];
 			probs2 = rep(0, length(x));
-			if(par[4] > 0){
+			if(par[4] > dislodge){
 				probs2[z >= 0] = dggamma(z[z >= 0], a=par[1], b=par[2], k=par[3]);
 			} else {
-				probs2[z >= 0] = dggamma(z[z >= 0], a=par[1], b=par[2], k=par[3]) / (1 - pggamma(-par[4], a=par[1], b=par[2], k=par[3]));
+				probs2[z >= 0] = dggamma(z[z >= 0], a=par[1], b=par[2], k=par[3]) / (1 - pggamma(dislodge-par[4], a=par[1], b=par[2], k=par[3]));
 			}
 
 			result = abs(probs1 - probs2);
@@ -142,14 +160,16 @@ with.infer.c = function(){
 			result
 		}
 
-		divergence_inf = integrate(divergence_cb, par[4], Inf);
+		divergence_inf = integrate(divergence_cb, max(par[4], dislodge), Inf, stop.on.error=F);
+		error = error || (divergence_inf$message != "OK");
+
 		print(paste("N: ", n, "  |  KL: ", divergence_inf$value, "  |  likelihood: ", bestResult_inf$value, "  |  convergence: ", bestResult_inf$convergence, "  |  estimate: ", c, "  |  params: ", par[1], par[2], par[3], par[4]));
 		print("------------------------------------------------------------------------------------------");
 
-		result = rbind(result, c(1, b, k, n,
-					   estim_par[1], estim_par[2], estim_par[3], c, divergence_c$value, bestResult_c$value, 2*bestResult_c$value + 6, sum(estim_counts),
-					   inf_par[1], inf_par[2], inf_par[3], inf_par[4], divergence_inf$value, bestResult_inf$value, 2*bestResult_inf$value + 8, sum(inf_counts)));
-		colnames(result) = c("orig_a", "orig_b", "orig_k", "n",
+		result = rbind(result, c(1, b, k, n, error,
+					   estim_par[1], estim_par[2], estim_par[3], c, divergence_c$value, bestResult_c$value, bestResult_c$value + 6, sum(estim_counts),
+					   inf_par[1], inf_par[2], inf_par[3], inf_par[4], divergence_inf$value, bestResult_inf$value, bestResult_inf$value + 8, sum(inf_counts)));
+		colnames(result) = c("orig_a", "orig_b", "orig_k", "n", "int_err",
 							 "estim_a", "estim_b", "estim_k", "estim_c", "estim_kl", "estim_loglik", "estim_aic", "estim_itercount",
 							 "inf_a", "inf_b", "inf_k", "inf_c", "inf_kl", "inf_loglik", "inf_aic", "inf_itercount");
 	}
@@ -157,146 +177,128 @@ with.infer.c = function(){
 	return(result);
 }
 
-without.infer.c = function(){
-	result = NULL;
+allResultsList = list();
+N = 10;
 
-	#for(a in a_list)
-	for(b in b_list)
-	for(k in k_list)
-	for(n in n_list){
-		# Generate synthetic data
-		data = rggamma(n=n, a=1, b=b, k=k);
-
-		# Get the estimator for populational minimum (or low quantile)
-		c = min(data) - sd(data) * sqrt(log(log(n)) / (2*n) );
-
-		# We will count number of calls to the likelihood function
-		count = 0;
-
-		likelihood = function(p){
-			count <<- count + 1;
-			allLogs = log(dggamma(data - c, a=p[1], b=p[2], k=p[3]));
-
-			problems = which(!is.finite(allLogs))
-			allLogs[problems] = log(1e-300); # Very bad result merely to force optim to continue optimizing
-
-			-2 * sum(allLogs);
-		}
-
-		# Try multiple initial parameters
-		initParams = rbind(
-			#c(1, 0.5, 0.5),
-			#c(1, 0.5,   1),
-			#c(1, 0.5,   2),
-			#c(1,   1, 0.5),
-			c(1,   1,   1)
-			#c(1,   1,   2),
-			#c(1,   2, 0.5),
-			#c(1,   2,   1),
-			#c(1,   2,   2)
-		);
-
-		allResults = list();                    # Return values from optim()
-		allValues = rep(0, nrow(initParams));   # Optimized -2l (l = log likelihood) values
-		estim_counts = NULL;                    # Number of calls to likelihood() during optim()
-		for(j in 1:nrow(initParams)){
-			allResults[[j]] = optim(initParams[j,], likelihood, method="L-BFGS", lower=c(0, 0, 0));
-			estim_counts = c(estim_counts, count);
-			count = 0;
-			allValues[j] = allResults[[j]]$value;
-		}
-
-		bestResult_c = allResults[[which.min(allValues)]];
-		par = bestResult_c$par;
-		estim_par = par;
-		#print(c(a, b, k));
-		#print(par);
-
-		# Measures divergence between two densities
-		divergence_cb = function(x){
-			# Sometimes integrate() calls this function with negative argument, so we gotta prepare for that...
-			probs1 = rep(0, length(x));
-			if(c > 0){
-				probs1[x >= 0] = dggamma(x[x >= 0], a=1, b=b, k=k) / (1 - pggamma(c, a=1, b=b, k=k));
-			} else {
-				probs1[x >= 0] = dggamma(x[x >= 0], a=1, b=b, k=k);
-			}
-
-			z = x - c;
-			probs2 = rep(0, length(x));
-			if(c > 0){
-				probs2[z >= 0] = dggamma(z[z >= 0], a=par[1], b=par[2], k=par[3]);
-			} else {
-				probs2[z >= 0] = dggamma(z[z >= 0], a=par[1], b=par[2], k=par[3]) / (1 - pggamma(-c, a=par[1], b=par[2], k=par[3]));
-			}
-
-			result = abs(probs1 - probs2);
-
-			result[!is.finite(result)] = 0;
-			result
-		}
-
-		divergence_c = integrate(divergence_cb, c, Inf);
-		print("------------------------------------------------------------------------------------------");
-		print(paste("N: ", n, "  |  KL: ", divergence_c$value, "  |  likelihood: ", bestResult_c$value, "  |  convergence: ", bestResult_c$convergence, "  |  estimate: ", c, "  |  params: ", par[1], par[2], par[3]));
-
-		# Repeat everything, but now for the case where we infer c
-		count = 0;
-
-		likelihood = function(p){
-			count <<- count + 1;
-			allLogs = log(dggamma(data, a=p[1], b=p[2], k=p[3]));
-
-			problems = which(!is.finite(allLogs))
-			allLogs[problems] = log(1e-300); # Very bad result merely to force optim to continue optimizing
-
-			-2 * sum(allLogs);
-		}
-
-		allResults = list();
-		allValues = rep(0, nrow(initParams));
-		inf_counts = NULL;
-		for(j in 1:nrow(initParams)){
-			allResults[[j]] = optim(c(initParams[j,]), likelihood, method="L-BFGS", lower=c(0, 0, 0), control=list(maxit=1000));
-			inf_counts = c(inf_counts, count);
-			count = 0;
-			allValues[j] = allResults[[j]]$value;
-		}
-
-		bestResult_inf = allResults[[which.min(allValues)]];
-		par = bestResult_inf$par;
-		inf_par = par;
-
-		divergence_cb = function(x){
-			# Sometimes integrate() calls this function with negative argument, so we gotta prepare for that...
-			probs1 = rep(0, length(x));
-			probs1[x >= 0] = dggamma(x[x >= 0], a=1, b=b, k=k);
-
-			probs2 = rep(0, length(x));
-			probs2[x >= 0] = dggamma(x[x >= 0], a=par[1], b=par[2], k=par[3]);
-
-			result = abs(probs1 - probs2);
-
-			result[!is.finite(result)] = 0;
-			result
-		}
-
-		divergence_inf = integrate(divergence_cb, 0, Inf);
-		print(paste("N: ", n, "  |  KL: ", divergence_inf$value, "  |  likelihood: ", bestResult_inf$value, "  |  convergence: ", bestResult_inf$convergence, "  |  estimate: ", c, "  |  params: ", par[1], par[2], par[3]));
-		print("------------------------------------------------------------------------------------------");
-
-		result = rbind(result, c(1, b, k, n,
-					   estim_par[1], estim_par[2], estim_par[3], c, divergence_c$value, bestResult_c$value, 2*bestResult_c$value + 6, sum(estim_counts),
-					   inf_par[1], inf_par[2], inf_par[3], divergence_inf$value, bestResult_inf$value, 2*bestResult_inf$value + 8, sum(inf_counts)));
-		colnames(result) = c("orig_a", "orig_b", "orig_k", "n",
-							 "estim_a", "estim_b", "estim_k", "estim_c", "estim_kl", "estim_loglik", "estim_aic", "estim_itercount",
-							 "inf_a", "inf_b", "inf_k", "inf_kl", "inf_loglik", "inf_aic", "inf_itercount");
-	}
-
-	return(result);
+for(i in 1:N){
+	result = with.infer.c();
+	allResultsList[[i]] = result;
 }
 
-result = without.infer.c();
-#result = with.infer.c();
+allResults = NULL;
+for(i in 1:N){
+	single = allResultsList[[i]];
+	allResults = rbind(allResults, single);
+}
 
-#data = rggamma(n=N, a=1.55, b=0.61, k=10.22) + 20;
+generate.report = function(allResults){
+	A = allResults[,"estim_kl"];
+	B = allResults[,"inf_kl"];
+	print(paste("Number of times our estimator is better (Absolute Difference Divergence): ",
+			sum(A < B) / length(B) * 100 , "%"), sep="");
+
+	idx = which(allResults[,"orig_b"] * allResults[,"orig_k"] > 1);
+
+	print(paste("For two-tailed cases: ",
+			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
+			" in ", length(B[idx]), " trials"), sep="");
+	print(paste("For one-tailed cases: ",
+			sum(A[-idx] < B[-idx]) / length(B[-idx]) * 100 , "%",
+			" in ", length(B[-idx]), " trials"), sep="");
+
+	idx = which(allResults[,"orig_k"] == 1);
+	print(paste("For Weibull (k=1) cases: ",
+			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
+			" in ", length(B[idx]), " trials"), sep="");
+
+	idx = which(allResults[,"orig_b"] == 1);
+	print(paste("For gamma (b=1) cases: ",
+			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
+			" in ", length(B[idx]), " trials"), sep="");
+
+	for(n in n_list){
+		idx = which(allResults[,"n"] == n);
+		print(paste("For N=", n, ": ",
+				sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
+				" in ", length(B[idx]), " trials"), sep="");
+	}
+
+	cat("\n");
+
+	A = allResults[,"estim_aic"];
+	B = allResults[,"inf_aic"];
+	print(paste("Number of times our estimator is better (Tentative Akaike Information Criterion): ",
+			sum(A < B) / length(B) * 100 , "%"), sep="");
+
+	idx = which(allResults[,"orig_b"] * allResults[,"orig_k"] > 1);
+
+	print(paste("For two-tailed cases: ",
+			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
+			" in ", length(B[idx]), " trials"), sep="");
+	print(paste("For one-tailed cases: ",
+			sum(A[-idx] < B[-idx]) / length(B[-idx]) * 100 , "%",
+			" in ", length(B[-idx]), " trials"), sep="");
+
+	idx = which(allResults[,"orig_k"] == 1);
+	print(paste("For Weibull (k=1) cases: ",
+			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
+			" in ", length(B[idx]), " trials"), sep="");
+
+	idx = which(allResults[,"orig_b"] == 1);
+	print(paste("For gamma (b=1) cases: ",
+			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
+			" in ", length(B[idx]), " trials"), sep="");
+
+	for(n in n_list){
+		idx = which(allResults[,"n"] == n);
+		print(paste("For N=", n, ": ",
+				sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
+				" in ", length(B[idx]), " trials"), sep="");
+	}
+
+	cat("\n");
+
+	A = allResults[,"estim_itercount"];
+	B = allResults[,"inf_itercount"];
+	print(paste("By inferring c we needed ", sum(A) / sum(B) * 100, "% more evaluations of the likelihood function"));
+}
+
+allResultsList2 = list();
+N = 10;
+
+for(i in 1:N){
+	result = with.infer.c(reducedInitParams=T);
+	allResultsList[[i]] = result;
+}
+
+allResults2 = NULL;
+for(i in 1:N){
+	single = allResultsList2[[i]];
+	allResults2 = rbind(allResults2, single);
+}
+
+# Check for possible errors, and remove them
+errors = which(allResults[,"int_err"] == 1);
+print(paste("There were ", length(errors), " errors"));
+
+errors2 = which(allResults2[,"int_err"] == 1);
+print(paste("There were ", length(errors2), " errors"));
+
+generate.report(allResults[-errors,]);
+cat("===== REDUCED LIST OF PARAMETERS =====\n");
+generate.report(allResults2[-errors2]);
+
+# Need this filtering before performing the following calculations
+allErrors = c(errors, errors2);
+allResults  = allResults[-allErrors,];
+allResults2 = allResults2[-allErrors,];
+
+A = allResults2[,"estim_loglik"] - allResults[,"estim_loglik"];
+B = allResults2[,"inf_loglik"] - allResults[,"inf_loglik"];
+
+plus.minus = function(data){
+	qnorm(0.05, sd=sd(data) / sqrt(length(data)));
+}
+
+print("Estimating c had an average worsening of ", mean(A), "+-", plus.minus(A), " points of log likelihood");
+print("Inferring c had an average worsening of ",  mean(B), "+-", plus.minus(B), " points of log likelihood");
