@@ -191,76 +191,213 @@ for(i in 1:N){
 	allResults = rbind(allResults, single);
 }
 
+# Simple confidence interval based on t-student distribution
+plus.minus = function(data){
+	q = qt(0.95, df=length(data) - 1);
+	return( q * sd(data) / sqrt(length(data)) );
+}
+
 generate.report = function(allResults){
+	idx5  = allResults[,"n"] == 5;
+	idx10 = allResults[,"n"] == 10;
+	idx20 = allResults[,"n"] == 20;
+	idx50 = allResults[,"n"] == 50;
+
 	A = allResults[,"estim_kl"];
 	B = allResults[,"inf_kl"];
 	print(paste("Number of times our estimator is better (Absolute Difference Divergence): ",
-			sum(A < B) / length(B) * 100 , "%"), sep="");
+			sum(A < B) / length(B) * 100 , "%",
+			" (",
+			sum(A[idx5] < B[idx5]) / length(B[idx5]) * 100,
+			sum(A[idx10] < B[idx10]) / length(B[idx10]) * 100,
+			sum(A[idx20] < B[idx20]) / length(B[idx20]) * 100,
+			sum(A[idx50] < B[idx50]) / length(B[idx50]) * 100,
+			" for N = 5, 10, 20, 50)"), sep="");
 
 	idx = which(allResults[,"orig_b"] * allResults[,"orig_k"] > 1);
 
+	A = allResults[,"estim_kl"];
+	B = allResults[,"inf_kl"];
 	print(paste("For two-tailed cases: ",
 			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
 			" in ", length(B[idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_kl"];
+		B = slice[,"inf_kl"];
+		cat(sum(A < B) / length(B) * 100, " ");
+	}
+	cat(" for N = 5, 10, 20, 50\n");
+
+	A = allResults[,"estim_kl"];
+	B = allResults[,"inf_kl"];
 	print(paste("For one-tailed cases: ",
 			sum(A[-idx] < B[-idx]) / length(B[-idx]) * 100 , "%",
 			" in ", length(B[-idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[-idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_kl"];
+		B = slice[,"inf_kl"];
+		cat(sum(A < B) / length(B) * 100, " ");
+	}
+	cat(" for N = 5, 10, 20, 50\n");
 
+	A = allResults[,"estim_kl"];
+	B = allResults[,"inf_kl"];
 	idx = which(allResults[,"orig_k"] == 1);
 	print(paste("For Weibull (k=1) cases: ",
 			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
 			" in ", length(B[idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_kl"];
+		B = slice[,"inf_kl"];
+		cat(sum(A < B) / length(B) * 100, " ");
+	}
+	cat(" for N = 5, 10, 20, 50\n");
 
+	A = allResults[,"estim_kl"];
+	B = allResults[,"inf_kl"];
 	idx = which(allResults[,"orig_b"] == 1);
 	print(paste("For gamma (b=1) cases: ",
 			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
 			" in ", length(B[idx]), " trials"), sep="");
-
-	for(n in n_list){
-		idx = which(allResults[,"n"] == n);
-		print(paste("For N=", n, ": ",
-				sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
-				" in ", length(B[idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_kl"];
+		B = slice[,"inf_kl"];
+		cat(sum(A < B) / length(B) * 100, " ");
 	}
+	cat(" for N = 5, 10, 20, 50\n");
 
 	cat("\n");
 
 	A = allResults[,"estim_aic"];
 	B = allResults[,"inf_aic"];
 	print(paste("Number of times our estimator is better (Tentative Akaike Information Criterion): ",
-			sum(A < B) / length(B) * 100 , "%"), sep="");
+			sum(A < B) / length(B) * 100 , "%",
+			" (",
+			sum(A[idx5] < B[idx5]) / length(B[idx5]) * 100,
+			sum(A[idx10] < B[idx10]) / length(B[idx10]) * 100,
+			sum(A[idx20] < B[idx20]) / length(B[idx20]) * 100,
+			sum(A[idx50] < B[idx50]) / length(B[idx50]) * 100,
+			" for N = 5, 10, 20, 50)"), sep="");
 
 	idx = which(allResults[,"orig_b"] * allResults[,"orig_k"] > 1);
 
+	A = allResults[,"estim_aic"];
+	B = allResults[,"inf_aic"];
 	print(paste("For two-tailed cases: ",
 			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
 			" in ", length(B[idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_aic"];
+		B = slice[,"inf_aic"];
+		cat(sum(A < B) / length(B) * 100, " ");
+	}
+	cat(" for N = 5, 10, 20, 50\n");
+
+	A = allResults[,"estim_aic"];
+	B = allResults[,"inf_aic"];
 	print(paste("For one-tailed cases: ",
 			sum(A[-idx] < B[-idx]) / length(B[-idx]) * 100 , "%",
 			" in ", length(B[-idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[-idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_aic"];
+		B = slice[,"inf_aic"];
+		cat(sum(A < B) / length(B) * 100, " ");
+	}
+	cat(" for N = 5, 10, 20, 50\n");
 
+	A = allResults[,"estim_aic"];
+	B = allResults[,"inf_aic"];
 	idx = which(allResults[,"orig_k"] == 1);
 	print(paste("For Weibull (k=1) cases: ",
 			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
 			" in ", length(B[idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_aic"];
+		B = slice[,"inf_aic"];
+		cat(sum(A < B) / length(B) * 100, " ");
+	}
+	cat(" for N = 5, 10, 20, 50\n");
 
+	A = allResults[,"estim_aic"];
+	B = allResults[,"inf_aic"];
 	idx = which(allResults[,"orig_b"] == 1);
 	print(paste("For gamma (b=1) cases: ",
 			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
 			" in ", length(B[idx]), " trials"), sep="");
-
-	for(n in n_list){
-		idx = which(allResults[,"n"] == n);
-		print(paste("For N=", n, ": ",
-				sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
-				" in ", length(B[idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_aic"];
+		B = slice[,"inf_aic"];
+		cat(sum(A < B) / length(B) * 100, " ");
 	}
+	cat(" for N = 5, 10, 20, 50\n");
 
 	cat("\n");
 
 	A = allResults[,"estim_itercount"];
 	B = allResults[,"inf_itercount"];
 	print(paste("By inferring c we needed ", sum(A) / sum(B) * 100, "% more evaluations of the likelihood function"));
+	cat("\n");
+
+
+	A = allResults[,"estim_c"];
+	B = allResults[,"inf_c"];
+	print(paste("Our estimator was below the inferred c in ", sum(A < B) / length(B) * 100, "% of the trials."));
+
+	idx = which(allResults[,"orig_b"] * allResults[,"orig_k"] > 1);
+
+	print(paste("For two-tailed cases: ",
+			sum(A[idx] < B[idx]) / length(B[idx]) * 100 , "%",
+			" in ", length(B[idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_c"];
+		B = slice[,"inf_c"];
+		cat(sum(A < B) / length(B) * 100, " ");
+	}
+	cat(" for N = 5, 10, 20, 50\n");
+
+	A = allResults[,"estim_c"];
+	B = allResults[,"inf_c"];
+	print(paste("For one-tailed cases: ",
+			sum(A[-idx] < B[-idx]) / length(B[-idx]) * 100 , "%",
+			" in ", length(B[-idx]), " trials"), sep="");
+	cat("\t => ");
+	for(N in c(5, 10, 20, 50)){
+		slice = allResults[-idx,];
+		slice = slice[slice[,"n"] == N,];
+		A = slice[,"estim_c"];
+		B = slice[,"inf_c"];
+		cat(sum(A < B) / length(B) * 100, " ");
+	}
+	cat(" for N = 5, 10, 20, 50\n");
+
+	cat("\n");
 }
 
 allResultsList2 = list();
@@ -268,7 +405,7 @@ N = 10;
 
 for(i in 1:N){
 	result = with.infer.c(reducedInitParams=T);
-	allResultsList[[i]] = result;
+	allResultsList2[[i]] = result;
 }
 
 allResults2 = NULL;
@@ -278,27 +415,24 @@ for(i in 1:N){
 }
 
 # Check for possible errors, and remove them
-errors = which(allResults[,"int_err"] == 1);
-print(paste("There were ", length(errors), " errors"));
+notErrors = allResults[,"int_err"] != 1;
+print(paste("There were ", sum(!notErrors), " errors"));
 
-errors2 = which(allResults2[,"int_err"] == 1);
-print(paste("There were ", length(errors2), " errors"));
+notErrors2 = allResults2[,"int_err"] != 1;
+print(paste("There were ", sum(!notErrors2), " errors"));
 
-generate.report(allResults[-errors,]);
+cat("===== FULL LIST OF PARAMETERS =====\n");
+generate.report(allResults[notErrors,]);
 cat("===== REDUCED LIST OF PARAMETERS =====\n");
-generate.report(allResults2[-errors2]);
+generate.report(allResults2[notErrors2,]);
 
 # Need this filtering before performing the following calculations
-allErrors = c(errors, errors2);
-allResults  = allResults[-allErrors,];
-allResults2 = allResults2[-allErrors,];
+allNotErrors = notErrors && notErrors2;
+allResults  = allResults[allNotErrors,];
+allResults2 = allResults2[allNotErrors,];
 
 A = allResults2[,"estim_loglik"] - allResults[,"estim_loglik"];
 B = allResults2[,"inf_loglik"] - allResults[,"inf_loglik"];
 
-plus.minus = function(data){
-	qnorm(0.05, sd=sd(data) / sqrt(length(data)));
-}
-
-print("Estimating c had an average worsening of ", mean(A), "+-", plus.minus(A), " points of log likelihood");
-print("Inferring c had an average worsening of ",  mean(B), "+-", plus.minus(B), " points of log likelihood");
+print(paste("Estimating c had an average worsening of ", mean(A), "+-", plus.minus(A), " points of log likelihood"));
+print(paste("Inferring c had an average worsening of ",  mean(B), "+-", plus.minus(B), " points of log likelihood"));
